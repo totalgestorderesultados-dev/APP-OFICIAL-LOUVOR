@@ -16,8 +16,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="pt-BR" className={inter.className}>
-      <body className="bg-[#f8f9fa] text-[#0f0f0f] antialiased flex min-h-screen">
+    <html lang="pt-BR" className={inter.className} suppressHydrationWarning>
+      <body
+        className="bg-[#f8f9fa] text-[#0f0f0f] antialiased flex min-h-screen"
+        suppressHydrationWarning
+      >
         <Sidebar />
         <main className="flex-1 md:ml-64 p-6 md:p-10 pt-20 md:pt-10 max-w-7xl mx-auto w-full">
           {children}

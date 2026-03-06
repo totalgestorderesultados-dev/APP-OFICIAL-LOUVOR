@@ -1,13 +1,43 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { Member, Song, Schedule } from '@/types';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder';
+let supabaseClient: SupabaseClient | null = null;
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+const getSupabase = (): SupabaseClient => {
+  if (!supabaseClient) {
+    let supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    let supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    // Robust check for valid URL and Key
+    const isValidUrl = (url: string | undefined): url is string => {
+      if (!url || url === 'undefined' || url === 'null' || url.trim() === '') return false;
+      try {
+        new URL(url);
+        return url.startsWith('http');
+      } catch {
+        return false;
+      }
+    };
+
+    const isValidKey = (key: string | undefined): key is string => {
+      return !!(key && key !== 'undefined' && key !== 'null' && key.trim() !== '');
+    };
+
+    if (!isValidUrl(supabaseUrl)) {
+      supabaseUrl = 'https://srnrfjcelesvobhvjfzi.supabase.co';
+    }
+    if (!isValidKey(supabaseAnonKey)) {
+      supabaseAnonKey = 'sb_publishable_dX60htrGw_jTJ-Sej5MZJA_7Nxn2Iz9';
+    }
+
+    supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
+  }
+  return supabaseClient;
+};
 
 // --- MEMBERS ---
 export const getMembers = async (): Promise<Member[]> => {
+  const supabase = getSupabase();
   const { data, error } = await supabase
     .from('members')
     .select('*')
@@ -21,6 +51,7 @@ export const getMembers = async (): Promise<Member[]> => {
 };
 
 export const addMember = async (member: Omit<Member, 'id'>): Promise<Member> => {
+  const supabase = getSupabase();
   const { data, error } = await supabase
     .from('members')
     .insert([member])
@@ -35,6 +66,7 @@ export const addMember = async (member: Omit<Member, 'id'>): Promise<Member> => 
 };
 
 export const updateMember = async (id: string, updates: Partial<Member>): Promise<Member> => {
+  const supabase = getSupabase();
   const { data, error } = await supabase
     .from('members')
     .update(updates)
@@ -50,6 +82,7 @@ export const updateMember = async (id: string, updates: Partial<Member>): Promis
 };
 
 export const deleteMember = async (id: string): Promise<void> => {
+  const supabase = getSupabase();
   const { error } = await supabase
     .from('members')
     .delete()
@@ -63,6 +96,7 @@ export const deleteMember = async (id: string): Promise<void> => {
 
 // --- SONGS ---
 export const getSongs = async (): Promise<Song[]> => {
+  const supabase = getSupabase();
   const { data, error } = await supabase
     .from('songs')
     .select('*')
@@ -76,6 +110,7 @@ export const getSongs = async (): Promise<Song[]> => {
 };
 
 export const addSong = async (song: Omit<Song, 'id'>): Promise<Song> => {
+  const supabase = getSupabase();
   const { data, error } = await supabase
     .from('songs')
     .insert([song])
@@ -90,6 +125,7 @@ export const addSong = async (song: Omit<Song, 'id'>): Promise<Song> => {
 };
 
 export const updateSong = async (id: string, updates: Partial<Song>): Promise<Song> => {
+  const supabase = getSupabase();
   const { data, error } = await supabase
     .from('songs')
     .update(updates)
@@ -105,6 +141,7 @@ export const updateSong = async (id: string, updates: Partial<Song>): Promise<So
 };
 
 export const deleteSong = async (id: string): Promise<void> => {
+  const supabase = getSupabase();
   const { error } = await supabase
     .from('songs')
     .delete()
@@ -118,6 +155,7 @@ export const deleteSong = async (id: string): Promise<void> => {
 
 // --- SCHEDULES ---
 export const getSchedules = async (): Promise<Schedule[]> => {
+  const supabase = getSupabase();
   const { data, error } = await supabase
     .from('schedules')
     .select('*')
@@ -131,6 +169,7 @@ export const getSchedules = async (): Promise<Schedule[]> => {
 };
 
 export const addSchedule = async (schedule: Omit<Schedule, 'id' | 'createdAt'>): Promise<Schedule> => {
+  const supabase = getSupabase();
   const { data, error } = await supabase
     .from('schedules')
     .insert([schedule])
@@ -145,6 +184,7 @@ export const addSchedule = async (schedule: Omit<Schedule, 'id' | 'createdAt'>):
 };
 
 export const updateSchedule = async (id: string, updates: Partial<Schedule>): Promise<Schedule> => {
+  const supabase = getSupabase();
   const { data, error } = await supabase
     .from('schedules')
     .update(updates)
@@ -160,6 +200,7 @@ export const updateSchedule = async (id: string, updates: Partial<Schedule>): Pr
 };
 
 export const deleteSchedule = async (id: string): Promise<void> => {
+  const supabase = getSupabase();
   const { error } = await supabase
     .from('schedules')
     .delete()
