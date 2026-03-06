@@ -19,6 +19,7 @@ import {
   Clock,
   Music,
   Users,
+  ExternalLink,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -163,8 +164,10 @@ export default function SchedulesPage() {
 
   const getMemberName = (id: string) =>
     members.find((m) => m.id === id)?.name || "-";
+  const getSong = (id: string) =>
+    songs.find((s) => s.id === id);
   const getSongName = (id: string) =>
-    songs.find((s) => s.id === id)?.name || "Música excluída";
+    getSong(id)?.name || "Música excluída";
 
   const copyToClipboard = (schedule: Schedule) => {
     const dateStr = format(parseISO(schedule.date), "EEEE, dd/MM", {
@@ -188,7 +191,8 @@ export default function SchedulesPage() {
     if (schedule.songs.length > 0) {
       text += `*REPERTÓRIO:*\n`;
       schedule.songs.forEach((songId, idx) => {
-        text += `${idx + 1}. ${getSongName(songId)}\n`;
+        const song = getSong(songId);
+        text += `${idx + 1}. ${song?.name || "Música excluída"}${song?.link ? ` (${song.link})` : ""}\n`;
       });
     }
     
@@ -239,13 +243,59 @@ export default function SchedulesPage() {
             Organize as equipes para os eventos
           </p>
         </div>
-        <button
-          onClick={() => openModal()}
-          className="bg-[#0a1f44] text-white px-5 py-2.5 rounded-xl font-medium flex items-center hover:bg-[#0a1f44]/90 transition-colors shadow-sm"
-        >
-          <Plus size={20} className="mr-2" />
-          Nova Escala
-        </button>
+      </div>
+
+      {/* ÁREA DE ADICIONAR ESCALAS (FIXA NO TOPO) */}
+      <div className="bg-white p-6 rounded-2xl shadow-sm border-2 border-[#0a1f44] animate-in slide-in-from-top duration-500">
+        <div className="flex items-center gap-2 mb-6 pb-2 border-b border-gray-100">
+          <div className="bg-[#0a1f44] p-2 rounded-lg text-white">
+            <Plus size={20} />
+          </div>
+          <h2 className="text-xl font-black text-[#0a1f44] uppercase tracking-tight">
+            Nova Escala de Louvor
+          </h2>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
+          <div className="space-y-2">
+            <label className="block text-sm font-bold text-gray-700 uppercase">
+              📅 Data da Escala
+            </label>
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#0a1f44] focus:ring-0 transition-all font-bold text-lg"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="block text-sm font-bold text-gray-700 uppercase">
+              📝 Nome do Evento
+            </label>
+            <input
+              type="text"
+              value={eventName}
+              onChange={(e) => setEventName(e.target.value)}
+              placeholder="Ex: Culto de Domingo"
+              className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#0a1f44] focus:ring-0 transition-all font-bold text-lg"
+            />
+          </div>
+          <button
+            onClick={() => {
+              if (!date || !eventName) {
+                alert("Por favor, preencha a data e o nome do evento!");
+                return;
+              }
+              setIsModalOpen(true);
+            }}
+            className="bg-[#0a1f44] text-white px-6 py-4 rounded-xl font-black uppercase tracking-widest hover:bg-[#0a1f44]/90 transition-all shadow-md active:scale-95 flex items-center justify-center gap-2"
+          >
+            Configurar Equipe <Plus size={20} />
+          </button>
+        </div>
+        <p className="text-[10px] text-gray-400 mt-4 italic">
+          * Preencha a data e o nome acima e clique em &quot;Configurar Equipe&quot; para escolher os músicos e músicas.
+        </p>
       </div>
 
       {schedules.length === 0 ? (
@@ -370,16 +420,32 @@ export default function SchedulesPage() {
                   </h4>
                   {schedule.songs.length > 0 ? (
                     <ul className="space-y-2">
-                      {schedule.songs.map((songId, idx) => (
-                        <li key={songId} className="text-sm flex items-start">
-                          <span className="text-gray-400 w-5 font-mono text-xs mt-0.5">
-                            {idx + 1}.
-                          </span>
-                          <span className="font-medium text-[#0f0f0f]">
-                            {getSongName(songId)}
-                          </span>
-                        </li>
-                      ))}
+                      {schedule.songs.map((songId, idx) => {
+                        const song = getSong(songId);
+                        return (
+                          <li key={songId} className="text-sm flex items-center justify-between group">
+                            <div className="flex items-start">
+                              <span className="text-gray-400 w-5 font-mono text-xs mt-0.5">
+                                {idx + 1}.
+                              </span>
+                              <span className="font-medium text-[#0f0f0f]">
+                                {song?.name || "Música excluída"}
+                              </span>
+                            </div>
+                            {song?.link && (
+                              <a
+                                href={song.link}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-500 hover:text-blue-700 p-1 rounded-md hover:bg-blue-50 transition-colors"
+                                title="Ouvir música"
+                              >
+                                <ExternalLink size={14} />
+                              </a>
+                            )}
+                          </li>
+                        );
+                      })}
                     </ul>
                   ) : (
                     <p className="text-sm text-gray-400 italic">
@@ -404,45 +470,25 @@ export default function SchedulesPage() {
               <X size={24} />
             </button>
 
-            <form onSubmit={handleSubmit} className="p-6 space-y-8 pt-14">
-              {/* DEBUG MARKER: V2 */}
+            <form onSubmit={handleSubmit} className="p-6 space-y-8 pt-4">
+              <div className="bg-gray-50 p-4 rounded-2xl border-2 border-dashed border-gray-200">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Data Selecionada</label>
+                    <div className="text-lg font-bold text-[#0a1f44]">{date ? format(parseISO(date), "dd/MM/yyyy") : "-"}</div>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Evento</label>
+                    <div className="text-lg font-bold text-[#0a1f44]">{eventName || "-"}</div>
+                  </div>
+                </div>
+              </div>
+
               {error && (
                 <div className="bg-red-50 text-red-600 p-3 rounded-xl text-sm border border-red-100">
                   {error}
                 </div>
               )}
-              <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
-                <h3 className="text-sm font-semibold text-[#0a1f44] uppercase tracking-wider mb-4 border-b border-gray-200 pb-2">
-                  Informações da Escala
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2">
-                      Data da Escala *
-                    </label>
-                    <input
-                      type="date"
-                      value={date}
-                      onChange={(e) => setDate(e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#0a1f44]/20 focus:border-[#0a1f44] transition-all bg-white"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2">
-                      Nome do Evento *
-                    </label>
-                    <input
-                      type="text"
-                      value={eventName}
-                      onChange={(e) => setEventName(e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#0a1f44]/20 focus:border-[#0a1f44] transition-all bg-white"
-                      placeholder="Ex: Culto de Domingo, Santa Ceia..."
-                      required
-                    />
-                  </div>
-                </div>
-              </div>
 
               {/* Team */}
               <div>
@@ -657,6 +703,9 @@ export default function SchedulesPage() {
       )}
 
       {/* Delete Confirmation Modal */}
+      <div className="text-center py-4 text-[10px] text-gray-300">
+        Versão 1.0.5 - Atualizado em 06/03
+      </div>
       {isDeleteModalOpen && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden p-6 text-center">
