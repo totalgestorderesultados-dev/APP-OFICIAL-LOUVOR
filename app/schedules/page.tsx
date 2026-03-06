@@ -20,6 +20,7 @@ import {
   Music,
   Users,
   ExternalLink,
+  Search,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -48,6 +49,7 @@ export default function SchedulesPage() {
   const [soundDesk, setSoundDesk] = useState("");
   const [selectedSongs, setSelectedSongs] = useState<string[]>([]);
   const [songSearchTerm, setSongSearchTerm] = useState("");
+  const [memberSearchTerm, setMemberSearchTerm] = useState("");
 
   const fetchData = async () => {
     setLoading(true);
@@ -225,6 +227,24 @@ export default function SchedulesPage() {
     </svg>
   );
 
+  const filteredSchedules = schedules.filter((schedule) => {
+    if (!memberSearchTerm.trim()) return true;
+    const term = memberSearchTerm.toLowerCase();
+    
+    const memberIds = [
+      schedule.minister,
+      ...schedule.backvocals,
+      schedule.guitar,
+      schedule.cajon,
+      schedule.bass,
+      schedule.soundDesk
+    ];
+
+    return memberIds.some(id => 
+      getMemberName(id).toLowerCase().includes(term)
+    );
+  });
+
   if (loading)
     return (
       <div className="flex justify-center items-center h-full">
@@ -298,7 +318,29 @@ export default function SchedulesPage() {
         </p>
       </div>
 
-      {schedules.length === 0 ? (
+      {/* BUSCA POR MEMBRO */}
+      <div className="relative">
+        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+          <Search size={20} className="text-gray-400" />
+        </div>
+        <input
+          type="text"
+          placeholder="Digite seu nome para ver suas escalas..."
+          value={memberSearchTerm}
+          onChange={(e) => setMemberSearchTerm(e.target.value)}
+          className="w-full pl-12 pr-4 py-4 bg-white rounded-2xl shadow-sm border border-gray-100 focus:border-[#0a1f44] focus:ring-4 focus:ring-[#0a1f44]/5 transition-all text-lg font-medium"
+        />
+        {memberSearchTerm && (
+          <button 
+            onClick={() => setMemberSearchTerm("")}
+            className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600"
+          >
+            <X size={20} />
+          </button>
+        )}
+      </div>
+
+      {filteredSchedules.length === 0 ? (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center">
           <CalendarIcon size={48} className="mx-auto text-gray-300 mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-1">
@@ -316,7 +358,7 @@ export default function SchedulesPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-          {schedules.map((schedule) => (
+          {filteredSchedules.map((schedule) => (
             <div
               key={schedule.id}
               className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow"
