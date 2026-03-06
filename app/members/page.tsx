@@ -18,7 +18,11 @@ export default function MembersPage() {
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [memberToDelete, setMemberToDelete] = useState<string | null>(null);
   const [editingMember, setEditingMember] = useState<Member | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Form State
   const [name, setName] = useState("");
@@ -66,20 +70,41 @@ export default function MembersPage() {
     e.preventDefault();
     if (!name.trim()) return;
 
-    if (editingMember) {
-      await updateMember(editingMember.id, { name, roles: selectedRoles });
-    } else {
-      await addMember({ name, roles: selectedRoles });
-    }
+    setIsSaving(true);
+    setError(null);
 
-    closeModal();
-    fetchMembers();
+    try {
+      if (editingMember) {
+        await updateMember(editingMember.id, { name, roles: selectedRoles });
+      } else {
+        await addMember({ name, roles: selectedRoles });
+      }
+      closeModal();
+      fetchMembers();
+    } catch (err) {
+      console.error("Error saving member:", err);
+      setError("Erro ao salvar membro. Verifique se as tabelas existem no Supabase.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handleDelete = async (id: string) => {
-    if (confirm("Tem certeza que deseja excluir este membro?")) {
-      await deleteMember(id);
+  const confirmDelete = (id: string) => {
+    setMemberToDelete(id);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (!memberToDelete) return;
+    
+    try {
+      await deleteMember(memberToDelete);
       fetchMembers();
+      setIsDeleteModalOpen(false);
+      setMemberToDelete(null);
+    } catch (err) {
+      console.error("Error deleting member:", err);
+      alert("Erro ao excluir membro.");
     }
   };
 
@@ -157,7 +182,7 @@ export default function MembersPage() {
                           <Edit2 size={18} />
                         </button>
                         <button
-                          onClick={() => handleDelete(member.id)}
+                          onClick={() => confirmDelete(member.id)}
                           className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                         >
                           <Trash2 size={18} />
@@ -188,6 +213,11 @@ export default function MembersPage() {
               </button>
             </div>
             <form onSubmit={handleSubmit} className="p-6 space-y-6">
+              {error && (
+                <div className="bg-red-50 text-red-600 p-3 rounded-xl text-sm border border-red-100">
+                  {error}
+                </div>
+              )}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Nome Completo
@@ -238,12 +268,42 @@ export default function MembersPage() {
                 </button>
                 <button
                   type="submit"
-                  className="bg-[#0a1f44] text-white px-6 py-2.5 rounded-xl font-medium hover:bg-[#0a1f44]/90 transition-colors shadow-sm"
+                  disabled={isSaving}
+                  className="bg-[#0a1f44] text-white px-6 py-2.5 rounded-xl font-medium hover:bg-[#0a1f44]/90 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Salvar
+                  {isSaving ? "Salvando..." : "Salvar"}
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {isDeleteModalOpen && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden p-6 text-center">
+            <div className="w-16 h-16 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Trash2 size={32} />
+            </div>
+            <h3 className="text-xl font-bold text-[#0f0f0f] mb-2">Excluir Membro</h3>
+            <p className="text-gray-500 mb-6">
+              Tem certeza que deseja excluir este membro? Esta ação não pode ser desfeita.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setIsDeleteModalOpen(false)}
+                className="flex-1 px-4 py-2.5 rounded-xl text-gray-600 font-medium hover:bg-gray-100 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleDelete}
+                className="flex-1 bg-red-600 text-white px-4 py-2.5 rounded-xl font-medium hover:bg-red-700 transition-colors shadow-sm"
+              >
+                Excluir
+              </button>
+            </div>
           </div>
         </div>
       )}
