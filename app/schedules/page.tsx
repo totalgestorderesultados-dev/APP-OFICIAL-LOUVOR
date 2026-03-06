@@ -108,7 +108,7 @@ export default function SchedulesPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!date || !eventType) return;
+    if (!date || !eventName) return;
 
     setIsSaving(true);
     setError(null);
@@ -116,7 +116,7 @@ export default function SchedulesPage() {
     const scheduleData = {
       date,
       eventName,
-      eventType,
+      eventType: eventName, // Use eventName for both for consistency if eventType is hidden
       minister,
       backvocals,
       guitar,
@@ -275,13 +275,8 @@ export default function SchedulesPage() {
                 <div>
                   <div className="flex items-center gap-2 mb-1">
                     <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">
-                      {schedule.eventType}
+                      {schedule.eventName || "Escala de Louvor"}
                     </span>
-                    {schedule.eventName && (
-                      <span className="text-gray-500 text-xs font-medium">
-                        • {schedule.eventName}
-                      </span>
-                    )}
                   </div>
                   <h3 className="text-xl font-bold text-[#0f0f0f] flex items-center mt-2">
                     <CalendarIcon size={20} className="mr-2 text-gray-400" />
@@ -409,53 +404,41 @@ export default function SchedulesPage() {
               <X size={24} />
             </button>
 
-            <form onSubmit={handleSubmit} className="p-6 space-y-8 pt-12">
+            <form onSubmit={handleSubmit} className="p-6 space-y-8 pt-14">
+              {/* DEBUG MARKER: V2 */}
               {error && (
                 <div className="bg-red-50 text-red-600 p-3 rounded-xl text-sm border border-red-100">
                   {error}
                 </div>
               )}
-              {/* Event Info */}
-              <div>
-                <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4 border-b pb-2">
-                  Informações do Evento
+              <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                <h3 className="text-sm font-semibold text-[#0a1f44] uppercase tracking-wider mb-4 border-b border-gray-200 pb-2">
+                  Informações da Escala
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Data
+                    <label className="block text-sm font-bold text-gray-700 mb-2">
+                      Data da Escala *
                     </label>
                     <input
                       type="date"
                       value={date}
                       onChange={(e) => setDate(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#0a1f44]/20 focus:border-[#0a1f44] transition-all"
+                      className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#0a1f44]/20 focus:border-[#0a1f44] transition-all bg-white"
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Tipo de Evento
-                    </label>
-                    <input
-                      type="text"
-                      value={eventType}
-                      onChange={(e) => setEventType(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#0a1f44]/20 focus:border-[#0a1f44] transition-all"
-                      placeholder="Ex: Culto de Domingo"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Nome do Evento (Opcional)
+                    <label className="block text-sm font-bold text-gray-700 mb-2">
+                      Nome do Evento *
                     </label>
                     <input
                       type="text"
                       value={eventName}
                       onChange={(e) => setEventName(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#0a1f44]/20 focus:border-[#0a1f44] transition-all"
-                      placeholder="Ex: Santa Ceia"
+                      className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#0a1f44]/20 focus:border-[#0a1f44] transition-all bg-white"
+                      placeholder="Ex: Culto de Domingo, Santa Ceia..."
+                      required
                     />
                   </div>
                 </div>
