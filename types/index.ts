@@ -25,6 +25,7 @@ export interface Song {
 export interface Schedule {
   id: string;
   date: string; // ISO string
+  eventName: string;
   eventType: string;
   minister: string; // Member ID
   backvocals: string[]; // Member IDs

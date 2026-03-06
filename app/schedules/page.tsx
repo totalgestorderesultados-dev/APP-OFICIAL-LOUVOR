@@ -37,6 +37,7 @@ export default function SchedulesPage() {
 
   // Form State
   const [date, setDate] = useState("");
+  const [eventName, setEventName] = useState("");
   const [eventType, setEventType] = useState("Culto de Domingo");
   const [minister, setMinister] = useState("");
   const [backvocals, setBackvocals] = useState<string[]>([]);
@@ -45,6 +46,7 @@ export default function SchedulesPage() {
   const [bass, setBass] = useState("");
   const [soundDesk, setSoundDesk] = useState("");
   const [selectedSongs, setSelectedSongs] = useState<string[]>([]);
+  const [songSearchTerm, setSongSearchTerm] = useState("");
 
   const fetchData = async () => {
     setLoading(true);
@@ -73,6 +75,7 @@ export default function SchedulesPage() {
     if (schedule) {
       setEditingSchedule(schedule);
       setDate(schedule.date);
+      setEventName(schedule.eventName || "");
       setEventType(schedule.eventType);
       setMinister(schedule.minister);
       setBackvocals(schedule.backvocals);
@@ -84,6 +87,7 @@ export default function SchedulesPage() {
     } else {
       setEditingSchedule(null);
       setDate(new Date().toISOString().split("T")[0]);
+      setEventName("");
       setEventType("Culto de Domingo");
       setMinister("");
       setBackvocals([]);
@@ -93,6 +97,7 @@ export default function SchedulesPage() {
       setSoundDesk("");
       setSelectedSongs([]);
     }
+    setSongSearchTerm("");
     setIsModalOpen(true);
   };
 
@@ -110,6 +115,7 @@ export default function SchedulesPage() {
 
     const scheduleData = {
       date,
+      eventName,
       eventType,
       minister,
       backvocals,
@@ -224,6 +230,11 @@ export default function SchedulesPage() {
                     <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">
                       {schedule.eventType}
                     </span>
+                    {schedule.eventName && (
+                      <span className="text-gray-500 text-xs font-medium">
+                        • {schedule.eventName}
+                      </span>
+                    )}
                   </div>
                   <h3 className="text-xl font-bold text-[#0f0f0f] flex items-center mt-2">
                     <CalendarIcon size={20} className="mr-2 text-gray-400" />
@@ -360,7 +371,7 @@ export default function SchedulesPage() {
                 <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4 border-b pb-2">
                   Informações do Evento
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Data
@@ -384,6 +395,18 @@ export default function SchedulesPage() {
                       className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#0a1f44]/20 focus:border-[#0a1f44] transition-all"
                       placeholder="Ex: Culto de Domingo"
                       required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Nome do Evento (Opcional)
+                    </label>
+                    <input
+                      type="text"
+                      value={eventName}
+                      onChange={(e) => setEventName(e.target.value)}
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#0a1f44]/20 focus:border-[#0a1f44] transition-all"
+                      placeholder="Ex: Santa Ceia"
                     />
                   </div>
                 </div>
@@ -524,13 +547,28 @@ export default function SchedulesPage() {
                 <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4 border-b pb-2">
                   Repertório
                 </h3>
+                <div className="mb-4">
+                  <input
+                    type="text"
+                    placeholder="Buscar música pelo nome..."
+                    value={songSearchTerm}
+                    onChange={(e) => setSongSearchTerm(e.target.value)}
+                    className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#0a1f44]/20 focus:border-[#0a1f44] transition-all text-sm"
+                  />
+                </div>
                 <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-xl p-2 bg-gray-50/50">
                   {songs.length === 0 ? (
                     <p className="text-sm text-gray-400 p-2">
                       Nenhuma música cadastrada.
                     </p>
                   ) : (
-                    songs.map((song) => (
+                    songs
+                      .filter((song) =>
+                        song.name
+                          .toLowerCase()
+                          .includes(songSearchTerm.toLowerCase()),
+                      )
+                      .map((song) => (
                       <label
                         key={song.id}
                         className="flex items-center p-2 hover:bg-white rounded-lg cursor-pointer transition-colors"
