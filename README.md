@@ -8,7 +8,7 @@ Aplicação web completa destinada à organização de grupos de louvor de igrej
 - **Ícones:** Lucide React
 - **Gráficos:** Recharts
 - **Gerenciamento de Datas:** date-fns
-- **Armazenamento:** LocalStorage (Mock API) - Preparado para Supabase/Firebase
+- **Banco de Dados:** Supabase (PostgreSQL)
 
 ## 📦 Como rodar o projeto localmente
 
@@ -17,48 +17,45 @@ Aplicação web completa destinada à organização de grupos de louvor de igrej
    ```bash
    npm install
    ```
-3. Inicie o servidor de desenvolvimento:
+3. Configure as variáveis de ambiente no arquivo `.env.local`:
+   ```env
+   NEXT_PUBLIC_SUPABASE_URL=https://srnrfjcelesvobhvjfzi.supabase.co
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_dX60htrGw_jTJ-Sej5MZJA_7Nxn2Iz9
+   ```
+4. Inicie o servidor de desenvolvimento:
    ```bash
    npm run dev
    ```
-4. Acesse `http://localhost:3000` no seu navegador.
+5. Acesse `http://localhost:3000` no seu navegador.
 
-## 🗄️ Configuração do Banco de Dados (Supabase/Firebase)
+## 🗄️ Banco de Dados (Supabase)
 
-Atualmente, o projeto utiliza uma camada de abstração em `lib/store.ts` que simula chamadas assíncronas a uma API, mas salva os dados no `localStorage` do navegador. Isso permite que o projeto seja testado imediatamente sem necessidade de configuração de banco de dados.
+O projeto está integrado ao Supabase. As tabelas necessárias são:
 
-Para migrar para um banco de dados real (ex: Supabase):
+### `members`
+- `id`: uuid (primary key)
+- `name`: text
+- `roles`: text[] (array de strings)
 
-1. Crie um projeto no [Supabase](https://supabase.com/).
-2. Crie as tabelas `members`, `songs` e `schedules` conforme a estrutura definida em `types/index.ts`.
-3. Instale o cliente do Supabase:
-   ```bash
-   npm install @supabase/supabase-js
-   ```
-4. Adicione suas credenciais no arquivo `.env.local`:
-   ```env
-   NEXT_PUBLIC_SUPABASE_URL=sua_url_aqui
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=sua_chave_aqui
-   ```
-5. Substitua o conteúdo de `lib/store.ts` pelas chamadas reais ao Supabase:
+### `songs`
+- `id`: uuid (primary key)
+- `name`: text
+- `artist`: text
+- `category`: text
+- `link`: text (opcional)
 
-```typescript
-import { createClient } from "@supabase/supabase-js";
-import { Member, Song, Schedule } from "@/types";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-);
-
-export const getMembers = async (): Promise<Member[]> => {
-  const { data, error } = await supabase.from("members").select("*");
-  if (error) throw error;
-  return data;
-};
-
-// Implemente as demais funções (addMember, updateMember, deleteMember, etc.) seguindo o mesmo padrão.
-```
+### `schedules`
+- `id`: uuid (primary key)
+- `date`: date
+- `eventType`: text
+- `minister`: uuid (references members.id)
+- `backvocals`: uuid[] (array de referências a members.id)
+- `guitar`: uuid (references members.id)
+- `cajon`: uuid (references members.id)
+- `bass`: uuid (references members.id)
+- `soundDesk`: uuid (references members.id)
+- `songs`: uuid[] (array de referências a songs.id)
+- `createdAt`: timestamp with time zone (default: now())
 
 ## 🌐 Deploy na Vercel
 
@@ -66,5 +63,5 @@ O projeto está pronto para ser hospedado na Vercel.
 
 1. Suba o código para um repositório no GitHub.
 2. Acesse [Vercel](https://vercel.com/) e crie um novo projeto importando o seu repositório.
-3. A Vercel detectará automaticamente que é um projeto Next.js.
+3. Configure as variáveis de ambiente `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY` na Vercel.
 4. Clique em **Deploy**.
