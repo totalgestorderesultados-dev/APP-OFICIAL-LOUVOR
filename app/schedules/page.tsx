@@ -166,6 +166,36 @@ export default function SchedulesPage() {
   const getSongName = (id: string) =>
     songs.find((s) => s.id === id)?.name || "Música excluída";
 
+  const copyToClipboard = (schedule: Schedule) => {
+    const dateStr = format(parseISO(schedule.date), "EEEE, dd/MM", {
+      locale: ptBR,
+    });
+    
+    let text = `*ESCALA DE LOUVOR*\n`;
+    text += `*Evento:* ${schedule.eventType}${schedule.eventName ? ` - ${schedule.eventName}` : ""}\n`;
+    text += `*Data:* ${dateStr}\n\n`;
+    
+    text += `*EQUIPE:*\n`;
+    text += `🎤 Ministro: ${getMemberName(schedule.minister)}\n`;
+    if (schedule.backvocals.length > 0) {
+      text += `🎤 Backvocals: ${schedule.backvocals.map(id => getMemberName(id)).join(", ")}\n`;
+    }
+    text += `🎸 Violão: ${getMemberName(schedule.guitar)}\n`;
+    text += `🥁 Cajón: ${getMemberName(schedule.cajon)}\n`;
+    text += `🎸 Baixo: ${getMemberName(schedule.bass)}\n`;
+    text += `🎚️ Som: ${getMemberName(schedule.soundDesk)}\n\n`;
+    
+    if (schedule.songs.length > 0) {
+      text += `*REPERTÓRIO:*\n`;
+      schedule.songs.forEach((songId, idx) => {
+        text += `${idx + 1}. ${getSongName(songId)}\n`;
+      });
+    }
+    
+    navigator.clipboard.writeText(text);
+    alert("Escala copiada para o clipboard! Agora é só colar no WhatsApp.");
+  };
+
   // Filters for dropdowns
   const ministers = members.filter((m) => m.roles.includes("Ministro"));
   const backvocalList = members.filter((m) => m.roles.includes("Backvocal"));
@@ -173,6 +203,23 @@ export default function SchedulesPage() {
   const cajons = members.filter((m) => m.roles.includes("Cajón"));
   const basses = members.filter((m) => m.roles.includes("Contrabaixo"));
   const soundDesks = members.filter((m) => m.roles.includes("Mesa de som"));
+
+  const CopyIcon = ({ size = 18 }: { size?: number }) => (
+    <svg 
+      xmlns="http://www.w3.org/2000/svg" 
+      width={size} 
+      height={size} 
+      viewBox="0 0 24 24" 
+      fill="none" 
+      stroke="currentColor" 
+      strokeWidth="2" 
+      strokeLinecap="round" 
+      strokeLinejoin="round"
+    >
+      <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/>
+      <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
+    </svg>
+  );
 
   if (loading)
     return (
@@ -244,6 +291,13 @@ export default function SchedulesPage() {
                   </h3>
                 </div>
                 <div className="flex gap-2">
+                  <button
+                    onClick={() => copyToClipboard(schedule)}
+                    title="Copiar para WhatsApp"
+                    className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                  >
+                    <CopyIcon />
+                  </button>
                   <button
                     onClick={() => openModal(schedule)}
                     className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
@@ -347,20 +401,15 @@ export default function SchedulesPage() {
       {/* Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl my-8 animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex justify-between items-center p-6 border-b border-gray-100 sticky top-0 bg-white rounded-t-2xl z-10">
-              <h2 className="text-xl font-bold text-[#0f0f0f]">
-                {editingSchedule ? "Editar Escala" : "Nova Escala"}
-              </h2>
-              <button
-                onClick={closeModal}
-                className="text-gray-400 hover:text-gray-600 p-1 rounded-md hover:bg-gray-100 transition-colors"
-              >
-                <X size={20} />
-              </button>
-            </div>
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl my-8 animate-in fade-in zoom-in-95 duration-200 relative">
+            <button
+              onClick={closeModal}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 p-2 rounded-full hover:bg-gray-100 transition-colors z-20"
+            >
+              <X size={24} />
+            </button>
 
-            <form onSubmit={handleSubmit} className="p-6 space-y-8">
+            <form onSubmit={handleSubmit} className="p-6 space-y-8 pt-12">
               {error && (
                 <div className="bg-red-50 text-red-600 p-3 rounded-xl text-sm border border-red-100">
                   {error}
