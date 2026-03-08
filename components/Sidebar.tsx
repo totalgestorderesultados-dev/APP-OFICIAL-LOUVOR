@@ -2,14 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, Users, Music, BarChart3, Menu, X } from "lucide-react";
+import { CalendarDays, Users, Music, BarChart3, Menu, X, HelpCircle } from "lucide-react";
 import { useState } from "react";
 
 const navItems = [
-  { name: "Dashboard", href: "/", icon: BarChart3 },
-  { name: "Escalas", href: "/schedules", icon: CalendarDays },
+  { name: "Escalas", href: "/", icon: CalendarDays },
   { name: "Membros", href: "/members", icon: Users },
   { name: "Músicas", href: "/songs", icon: Music },
+  { name: "Como usar?", href: "/how-to", icon: HelpCircle },
+  { name: "Dashboard", href: "/dashboard", icon: BarChart3 },
 ];
 
 export default function Sidebar() {
